@@ -13,23 +13,33 @@ An outbreak, a genome and a list of people to test. Every question of the lab is
 ## How to run
 
 ```bash
+
 java tools/MakeVariant.java 250825 data
+
 ```
 
 ```bash
+
 javac -encoding UTF-8 -d out src/*.java
+
 ```
 
 ```bash
+
 java -cp out Main
+
 ```
 
 ```bash
+
 java tools/Check.java
+
 ```
 
 ```bash
+
 java -cp out Bench
+
 ```
 
 `Main` reads the four files in `data`, prints the 9 lines and writes the lab console `output/outbreak.html`. `Check` runs the program on the three examples (`tiny`, `small`, `dense`): all 27 lines are right. On my data the program finishes in well under one second.
@@ -44,7 +54,7 @@ java -cp out Bench
 | 4. Copied words | `src/Marker.java` | `sharedWords`, `roll`, `sameLetters` (Rabin-Karp) |
 | 5. Whom to test | `src/Outbreak.java` | `cheapestTests`, `longestChain`, `bfsOrder` |
 
-No `indexOf`, `contains`, regular expressions, `split` or hashing libraries are used in the missions. The only library class is a `HashMap` that stores my own hash numbers.
+No `indexOf`, `contains`, regular expressions, `split` or hashing libraries are used in the missions. Rabin–Karp uses a `HashMap` to store hashes computed by the program.
 
 ## Program output
 
@@ -82,13 +92,13 @@ Before writing code I checked the rules on `examples/tiny`:
 
 **Mission 1. What does the cell d[i][j] of your table mean, and how is it computed from other cells?**
 
-d[i][j] is the smallest number of changes that turn the first i letters of A into the first j letters of B. The first column is d[i][0] = i (delete all i letters) and the first row is d[0][j] = j (insert all j letters). For any other cell I look at the last step and take the smallest of three: d[i-1][j-1] + 0 if the letters are equal or + 1 if one is replaced, d[i-1][j] + 1 for deleting A[i-1], and d[i][j-1] + 1 for inserting B[j-1]. The answer is the corner d[n][m], which is 72 for my strains.
+d[i][j] is the smallest number of changes that turn the first i letters of A into the first j letters of B. The first column is d[i][0] = i (delete all i letters) and the first row is d[0][j] = j (insert all j letters). For any other cell I look at the last step and take the smallest of three: d[i-1][j-1] + 0 if the letters are equal or + 1 if one is replaced, d[i-1][j] + 1 for deleting A[i-1], and d[i][j-1] + 1 for inserting B[j-1]. The answer is the corner d[n][m], which is 93 for my strains.
 
 **Mission 2. How is the longest common subsequence different from the longest common substring? My Shared core is bigger than the number of letters that are the same at the same place: why?**
 
 A substring is one unbroken block of letters. A subsequence may skip letters, as long as the order stays the same. My table L[i][j] is the LCS of the first i letters of A and the first j letters of B. If A[i-1] = B[j-1] it is L[i-1][j-1] + 1; otherwise it is the bigger of L[i-1][j] and L[i][j-1].
 
-Only 310 positions of my strains have the same letter at the same index, but the Shared core is 1108. The reason is that strain B starts with one extra letter (`GGA` + `ATAACG...`), so the letters after it are shifted by one place, and later insertions and deletions shift them again. A comparison index by index loses all of them. The LCS lets the two strains slide against each other and still matches them.
+The strains have 482 matching letters at the same index. The Shared core is 1085 because the LCS can skip letters and match letters at different indices while preserving their order.
 
 **Mission 3. What does the prefix function tell you, and why does the pointer in the text never go back in KMP? What is the Border length of my marker and what does it mean?**
 
@@ -98,9 +108,9 @@ My marker `GGACATGGAC` has Border length 4: `GGAC` is both its beginning and its
 
 **Mission 4. Why must you compare the letters after the hashes are equal? What happens to the cost of Rabin-Karp if many windows have the same hash?**
 
-A hash puts a huge number of different words into a limited range of numbers, so two different words can get the same hash (a collision, a "false alarm"). Equal hashes only mean "maybe equal". Only a letter-by-letter comparison proves that the word of A really occurs in B. I tested this: with a tiny modulus MOD = 7 almost every window collides, and my answer stays the same because I compare the letters.
+A hash puts a huge number of different words into a limited range of numbers, so two different words can get the same hash (a collision, a "false alarm"). Equal hashes only mean "maybe equal". Only a letter-by-letter comparison proves that the word of A really occurs in B.
 
-Each comparison costs k letters. If many windows have the same hash, the program compares all the time and the cost grows from O(n + m) towards O(n · m · k) in the worst case, slower than the naive search. A large prime modulus (I use 1 000 000 007) keeps collisions rare. The rolling hash itself is O(1) per step: remove the old letter times BASE^(k-1), multiply by BASE, add the new letter, and add MOD so the value is never negative.
+Each comparison costs k letters. If many windows have the same hash, the program compares all the time and the cost grows from O(n + m) towards O(n · m · k) in the worst case, when each window of A must be checked against many windows of B. My code uses a modulus of 10 000 000 007. The rolling hash itself is O(1) per step: remove the old letter times BASE^(k-1), multiply by BASE, add the new letter, and add MOD so the value is never negative.
 
 **Mission 5. What are the two states of a person in your DP, and how do you get the answer for a person from its children? Why does a greedy "test the person with most links first" not always give the cheapest answer?**
 
@@ -113,7 +123,7 @@ I process the people from the leaves up, and the answer is min(in[0], out[0]). T
 
 Greedy fails because it decides by one local number and never reconsiders. For example, take a centre with 3 links and cost 100, connected to three leaves with cost 1 each. Greedy tests the centre and pays 100, but testing the three leaves covers the same links for 3. The DP compares both states of every person, so it always finds the minimum.
 
-For the longest chain, down[v] is the longest way down from v. For every person I keep the two longest ways down through different children, and the longest chain through v is their sum. The answer is the biggest sum, 28 links for my tree.
+For the longest chain, down[v] is the longest way down from v. For every person I keep the two longest ways down through different children, and the longest chain through v is their sum. The answer is the biggest sum, 27 links for my tree.
 
 ## AI use
 
@@ -131,7 +141,7 @@ Milliseconds, average of 3 runs, from `java -cp out Bench`.
 | KMP | 20 000 / 40 000 / 80 000 | 1.4 / 1.8 / 0.4 |
 | edit distance | 500 / 1000 / 2000 / 4000 | 5.6 / 8.8 / 22.4 / 107.9 |
 
-**How the time grows.** The naive search about doubles when the text doubles (×2.1 and ×2.3), but it is already slow: at almost every position it compares nearly all 2000 letters of the pattern, which is O(n · m). KMP stays around one millisecond because it is O(n + m). At these sizes its times are mostly JVM warm-up and noise; the 80 000 run is even the fastest because the code is already compiled by then. The edit distance grows about ×4 when the length doubles (22.4 → 107.9 ms), as expected for an n × m table. The two smallest sizes are disturbed by warm-up.
+**How the time grows.** The naive search about doubles when the text doubles (×2.1 and ×2.3), but it is already slow: at almost every position it compares nearly all 2000 letters of the pattern, which is O(n · m). KMP stays around one millisecond because it is O(n + m). At these sizes its times are mostly JVM warm-up and noise; the 80 000 run is even the fastest because the code is already compiled by then. The edit distance grows about ×4.8 when the length doubles (22.4 → 107.9 ms), as expected for an n × m table. The two smallest sizes are disturbed by warm-up.
 
 ## Complexity
 
@@ -141,8 +151,8 @@ n is the length of the text (or of a strain), m the length of the pattern (or of
 |---|---|---|---|
 | Edit distance | O(n · m) | O(n · m) | full (n+1) × (m+1) table, O(1) work per cell; two rows would be enough for O(m) space |
 | LCS | O(n · m) | O(n · m) | the same kind of table, O(1) work per cell |
-| Prefix function and KMP | O(n + m) | O(m), plus the list of hits | every step moves i forward or makes k smaller, so all the inner `while` loops together do O(n + m) work |
-| Rabin-Karp (shared words) | O(n + m) expected, O(n · m · k) worst case | O(m) for the hash map of B's windows | rolling hash is O(1) per window; k letters are compared only when the hashes are equal; a large prime modulus keeps collisions rare |
+| Prefix function and KMP | O(n + m) | O(n + m) | stores the prefix table and an array of up to n − m + 1 hit positions |
+| Rabin-Karp (shared words) | O(n + m) expected, O(n · m · k) worst case | O(m) for the hash map of B's windows | rolling hash is O(1) per window; k letters are compared only when the hashes are equal; a large modulus helps limit collisions |
 | Tree DP (testing and longest chain) | O(v) | O(v) | one BFS from person 0, then every person and every link is handled a constant number of times |
 
 ## Checklist
@@ -150,5 +160,6 @@ n is the length of the text (or of a strain), m the length of the pattern (or of
 - [x] The four files in `data` and the screenshot `output/outbreak.png` are in the repository.
 - [x] `java tools/Check.java` shows all examples right.
 - [x] This README is filled in, including the program output and the AI use section.
-- [x] The work is pushed to `main` with at least one commit per mission, and the repository is public.
+- [x] The repository is public and the project is on `main`.
+- [ ] The history shows a separate commit after each mission.
 - [ ] The link is attached in Moodle.
